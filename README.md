@@ -2,7 +2,7 @@
  * @Author: sikuai2333 2643927725@qq.com
  * @Date: 2025-04-26 10:08:35
  * @LastEditors: sikuai2333 2643927725@qq.com
- * @LastEditTime: 2025-04-26 10:55:31
+ * @LastEditTime: 2025-04-26 10:59:09
  * @FilePath: \屏幕亮度调节\README.md
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -57,7 +57,7 @@ pip install pyinstaller
 ```
 2. 打包
 ```bash
-pyinstaller main.py --no-console
+pyinstaller main.py
 ```
 
 
