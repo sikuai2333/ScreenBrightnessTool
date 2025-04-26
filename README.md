@@ -2,7 +2,7 @@
  * @Author: sikuai2333 2643927725@qq.com
  * @Date: 2025-04-26 10:08:35
  * @LastEditors: sikuai2333 2643927725@qq.com
- * @LastEditTime: 2025-04-26 10:48:54
+ * @LastEditTime: 2025-04-26 10:55:31
  * @FilePath: \屏幕亮度调节\README.md
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
@@ -29,9 +29,6 @@
 - **热键支持**：支持使用Ctrl+E或自定义热键退出软件
 - **定时功能**：可在指定时间自动切换预设模式
 
-## 截图展示
-
-_此处可添加程序截图_
 
 ## 安装与使用
 
@@ -51,6 +48,19 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+
+### 打包exe
+
+1. 安装PyInstaller:
+```bash
+pip install pyinstaller
+```
+2. 打包
+```bash
+pyinstaller main.py --no-console
+```
+
+
 
 ## 使用说明
 
