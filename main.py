@@ -129,10 +129,23 @@ class BrightnessApp:
         # 获取保存的悬浮按钮设置，默认为True
         show_floating_button = settings.value("show_floating_button", True, type=bool)
         
-        # 应用亮度和高对比度设置
+        # 直接应用亮度设置到亮度控制器
+        self.brightness_control.set_brightness(brightness)
+        self.brightness_control.toggle_high_contrast(high_contrast)
+        self.brightness_control.toggle_blue_light_filter(blue_light)
+        
+        # 然后设置UI状态，避免触发重复的更改事件
+        self.main_window.brightness_slider.blockSignals(True)
+        self.main_window.high_contrast_checkbox.blockSignals(True)
+        self.main_window.blue_light_checkbox.blockSignals(True)
+        
         self.main_window.brightness_slider.setValue(brightness)
         self.main_window.high_contrast_checkbox.setChecked(high_contrast)
         self.main_window.blue_light_checkbox.setChecked(blue_light)
+        
+        self.main_window.brightness_slider.blockSignals(False)
+        self.main_window.high_contrast_checkbox.blockSignals(False)
+        self.main_window.blue_light_checkbox.blockSignals(False)
         
         # 设置按钮选中状态，但不立即显示或隐藏
         self.main_window.floating_btn_checkbox.setChecked(show_floating_button)
@@ -140,6 +153,12 @@ class BrightnessApp:
         # 初始化悬浮按钮的亮度显示
         self.floating_button.current_brightness = brightness
         self.floating_button.update_button_text()
+        
+        # 恢复区域选择模式
+        area_mode = settings.value("area_mode", False, type=bool)
+        if area_mode and hasattr(self.main_window, 'area_mode_checkbox'):
+            self.main_window.area_mode_checkbox.setChecked(area_mode)
+            self.brightness_control.is_area_selected = area_mode
     
     def save_settings(self):
         """保存当前设置"""

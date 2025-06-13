@@ -1,8 +1,49 @@
-/__pycache__
-/dist/*
-/build/*
-/venv/*
-/env/*
-/logs/*
-/cache/*
-__pycache__/*
+# Python编译文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 打包相关文件
+build/
+dist/
+*.spec
+*.manifest
+*.exe
+*.dmg
+*.pkg
+*.app
+*.AppImage
+*.deb
+*.rpm
+
+# 开发环境相关
+.vscode/
+.idea/
+*.iml
+.spyderproject
+.spyproject
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# 运行时生成的文件
+*.log
+*.db
+*.sqlite
+.env
+venv/
+ENV/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 个人配置文件(可能包含敏感信息)
+config.ini
+settings.json
+credentials.json
