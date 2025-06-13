@@ -32,8 +32,20 @@
   - 支持时间段设置，可指定开始时间和结束时间
   - 在时间段内自动应用选定模式，时间段外恢复正常模式
   - 支持跨日设置（如晚上10点到次日早上6点）
+- **暗黑模式**：支持应用界面暗黑/亮色主题切换
+- **区域亮度调节**：可以选择只调整屏幕的特定区域亮度
 - **官方网站**：提供GitHub链接，可获取最新版本和提交问题
 
+## 文件结构
+
+项目主要包含以下文件：
+
+- `main.py` - 程序入口，初始化和协调各模块
+- `main_window.py` - 用户界面模块，处理UI交互
+- `brightness_control.py` - 亮度控制核心模块，通过透明遮罩实现亮度控制
+- `floating_button.py` - 悬浮窗模块，实现屏幕上的悬浮控制功能
+- `icon.png` - 应用图标
+- `requirements.txt` - 依赖包列表
 
 ## 安装与使用
 
@@ -54,18 +66,43 @@ pip install -r requirements.txt
 python main.py
 ```
 
-### 打包exe
+### 打包可执行文件
 
-1. 安装PyInstaller:
+#### Windows
+
 ```bash
-pip install pyinstaller
+# 基础打包
+pyinstaller --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool main.py
+
+# 更高级打包（增加版本信息等）
+pyinstaller --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool --version-file=version.txt main.py
 ```
-2. 打包
+
+#### macOS
+
 ```bash
-pyinstaller main.py --noconsole --onefile
+# 打包为独立应用
+pyinstaller --noconsole --onefile --icon=icon.icns --name=ScreenBrightnessTool main.py
+
+# 打包为app格式
+pyinstaller --noconsole --windowed --icon=icon.icns --name=ScreenBrightnessTool main.py
+
+# 创建DMG安装包（需要先打包成app）
+hdiutil create -srcfolder "dist/ScreenBrightnessTool.app" -volname "ScreenBrightnessTool" -fs HFS+ -format UDBZ "dist/ScreenBrightnessTool.dmg"
 ```
 
+#### Linux
 
+```bash
+# 基础打包
+pyinstaller --noconsole --onefile --name=ScreenBrightnessTool main.py
+
+# 打包为AppImage（需要安装appimagetool）
+# 1. 使用PyInstaller打包
+pyinstaller --noconsole --name=ScreenBrightnessTool main.py
+# 2. 创建AppDir结构
+# 3. 使用appimagetool打包
+```
 
 ## 使用说明
 
@@ -94,6 +131,18 @@ pyinstaller main.py --noconsole --onefile
 
 - 默认使用Ctrl+E快捷键退出程序
 - 可以在设置中选择其他预设热键：Ctrl+Q或Alt+F4
+
+### 暗黑模式
+
+- 在"外观设置"中启用暗黑模式，使界面更适合夜间使用
+- 设置会自动保存，下次启动时保持相同的界面主题
+
+### 区域亮度调节
+
+- 在"外观设置"中启用"区域亮度调节"功能
+- 点击"选择区域"按钮，然后在屏幕上拖动鼠标选择需要调节亮度的区域
+- 选择完成后亮度调节仅应用于选定区域
+- 可以通过"清除区域"按钮恢复全屏亮度调节
 
 ### 定时功能
 
@@ -131,6 +180,8 @@ pyinstaller main.py --noconsole --onefile
 - 修复了悬浮窗（如火绒流量窗口、右键菜单等）在遮罩层下方闪烁的问题
 - 优化了遮罩层窗口的堆叠顺序，减少对其他窗口的干扰
 - 改进了窗口属性设置，增强了与系统的兼容性
+- 修复了启动时亮度设置不自动应用的问题
+- 添加了暗黑模式和区域亮度调节功能
 
 ## 贡献指南
 
@@ -174,11 +225,20 @@ A cross-platform screen brightness adjustment tool based on PyQt5, which control
   - Supports time range setting with start and end times
   - Automatically applies selected mode during the set time range, and restores normal mode outside that range
   - Supports cross-day settings (e.g., 10 PM to 6 AM next day)
+- **Dark Mode**: Toggle between dark and light application themes
+- **Area Brightness Adjustment**: Select specific screen areas for brightness adjustment
 - **Official Website**: Provides GitHub link for latest versions and issue reporting
 
-## Screenshots
+## File Structure
 
-_Screenshots can be added here_
+The project consists of these main files:
+
+- `main.py` - Program entry point that initializes and coordinates all modules
+- `main_window.py` - UI module handling user interactions
+- `brightness_control.py` - Core brightness control module implementing the overlay system
+- `floating_button.py` - Floating widget module for on-screen brightness control
+- `icon.png` - Application icon
+- `requirements.txt` - List of dependencies
 
 ## Installation & Usage
 
@@ -199,16 +259,42 @@ pip install -r requirements.txt
 python main.py
 ```
 
-### Building Executable
+### Building Executables
 
-1. Install PyInstaller:
+#### Windows
+
 ```bash
-pip install pyinstaller
+# Basic build
+pyinstaller --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool main.py
+
+# Advanced build with version info
+pyinstaller --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool --version-file=version.txt main.py
 ```
 
-2. Build:
+#### macOS
+
 ```bash
-pyinstaller main.py
+# Build standalone executable
+pyinstaller --noconsole --onefile --icon=icon.icns --name=ScreenBrightnessTool main.py
+
+# Build app bundle
+pyinstaller --noconsole --windowed --icon=icon.icns --name=ScreenBrightnessTool main.py
+
+# Create DMG installer (requires app bundle first)
+hdiutil create -srcfolder "dist/ScreenBrightnessTool.app" -volname "ScreenBrightnessTool" -fs HFS+ -format UDBZ "dist/ScreenBrightnessTool.dmg"
+```
+
+#### Linux
+
+```bash
+# Basic build
+pyinstaller --noconsole --onefile --name=ScreenBrightnessTool main.py
+
+# Build AppImage (requires appimagetool)
+# 1. Create with PyInstaller
+pyinstaller --noconsole --name=ScreenBrightnessTool main.py
+# 2. Create AppDir structure
+# 3. Use appimagetool to build AppImage
 ```
 
 ## User Guide
@@ -238,6 +324,18 @@ pyinstaller main.py
 
 - Default Ctrl+E hotkey to exit the program
 - Other preset hotkeys available: Ctrl+Q or Alt+F4
+
+### Dark Mode
+
+- Enable Dark Mode in "Appearance Settings" for more comfortable night-time use
+- Settings are automatically preserved between application restarts
+
+### Area Brightness Adjustment
+
+- Enable "Area Brightness Adjustment" in "Appearance Settings"
+- Click "Select Area" button, then drag on screen to select the region for brightness adjustment
+- Selected area will be the only part affected by brightness changes
+- Click "Clear Area" to return to full-screen brightness adjustment
 
 ### Timer Function
 
@@ -272,9 +370,11 @@ The program adjusts screen brightness by overlaying a semi-transparent mask on t
 
 ### Recently Fixed Issues
 
-- Fixed flickering issues with floating windows (like HuoRong traffic monitor, right-click menus, etc.) under the brightness overlay
+- Fixed flickering issues with floating windows under the brightness overlay
 - Optimized window stacking order to reduce interference with other windows
 - Improved window property settings for better system compatibility
+- Fixed brightness settings not automatically applying at startup
+- Added Dark Mode and Area Brightness Adjustment features
 
 ## Contributing
 
