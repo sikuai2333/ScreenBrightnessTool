@@ -1,8 +1,8 @@
 import sys
 import platform
-from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtCore import Qt, QTimer, QRect
-from PyQt5.QtGui import QPainter, QColor
+from PyQt5.QtWidgets import QWidget, QApplication, QRubberBand
+from PyQt5.QtCore import Qt, QTimer, QRect, QPoint, QSize
+from PyQt5.QtGui import QPainter, QColor, QScreen, QCursor
 
 class BrightnessControl:
     def __init__(self):
@@ -10,7 +10,12 @@ class BrightnessControl:
         self.is_high_contrast = False
         self.is_blue_light_filter = False
         self.screens = []
+        self.selected_area = None  # 存储选定的屏幕区域
+        self.is_area_selected = False  # 是否使用区域模式
         self.initialize_screens()
+        
+        # 区域选择器
+        self.area_selector = None
     
     def initialize_screens(self):
         """初始化所有屏幕的遮罩"""
@@ -52,6 +57,12 @@ class BrightnessControl:
         alpha = int(255 * (100 - brightness_value) / 100)
         
         for overlay in self._overlay:
+            # 如果在区域模式下，只有选中的区域才应用亮度设置
+            if self.is_area_selected and self.selected_area:
+                overlay.set_selected_area(self.selected_area)
+            else:
+                overlay.clear_selected_area()
+                
             overlay.set_opacity(alpha)
             if not overlay.isVisible():
                 overlay.show()
@@ -78,6 +89,32 @@ class BrightnessControl:
                     self.is_high_contrast = False
                     overlay.set_high_contrast(False)
     
+    def start_area_selection(self):
+        """开始选择屏幕区域"""
+        if not self.area_selector:
+            self.area_selector = AreaSelector(self)
+        self.area_selector.start_selection()
+    
+    def select_area(self, selected_rect):
+        """设置选定的屏幕区域"""
+        self.selected_area = selected_rect
+        self.is_area_selected = True
+        
+        # 重新应用当前亮度设置到选定区域
+        if self._overlay:
+            for overlay in self._overlay:
+                overlay.set_selected_area(selected_rect)
+    
+    def clear_selected_area(self):
+        """清除选定的屏幕区域"""
+        self.selected_area = None
+        self.is_area_selected = False
+        
+        # 更新所有遮罩
+        if self._overlay:
+            for overlay in self._overlay:
+                overlay.clear_selected_area()
+    
     def cleanup(self):
         """清理所有遮罩"""
         if self._overlay:
@@ -85,6 +122,74 @@ class BrightnessControl:
                 overlay.close()
                 overlay.deleteLater()
             self._overlay = []
+            
+        if self.area_selector:
+            self.area_selector.close()
+            self.area_selector = None
+
+
+class AreaSelector(QWidget):
+    """屏幕区域选择器"""
+    def __init__(self, brightness_control):
+        super(AreaSelector, self).__init__(None, Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
+        self.brightness_control = brightness_control
+        self.setWindowOpacity(0.3)
+        self.rubberband = None
+        self.origin = QPoint()
+        self.selection_active = False
+        
+        # 获取整个屏幕的几何信息
+        screen_rect = QApplication.desktop().screenGeometry()
+        self.setGeometry(screen_rect)
+        
+    def start_selection(self):
+        """开始区域选择过程"""
+        # 显示全屏遮罩
+        self.setCursor(Qt.CrossCursor)
+        self.show()
+        
+    def mousePressEvent(self, event):
+        """鼠标按下事件，开始绘制橡皮筋"""
+        if event.button() == Qt.LeftButton:
+            self.origin = event.pos()
+            if not self.rubberband:
+                self.rubberband = QRubberBand(QRubberBand.Rectangle, self)
+            self.rubberband.setGeometry(QRect(self.origin, QSize()))
+            self.rubberband.show()
+            self.selection_active = True
+    
+    def mouseMoveEvent(self, event):
+        """鼠标移动事件，更新橡皮筋大小"""
+        if self.selection_active:
+            self.rubberband.setGeometry(QRect(self.origin, event.pos()).normalized())
+    
+    def mouseReleaseEvent(self, event):
+        """鼠标释放事件，完成选择"""
+        if event.button() == Qt.LeftButton and self.selection_active:
+            selected_rect = QRect(self.origin, event.pos()).normalized()
+            
+            # 确保选择区域有效
+            if selected_rect.width() > 10 and selected_rect.height() > 10:
+                # 通知亮度控制器应用选定区域
+                self.brightness_control.select_area(selected_rect)
+            
+            self.selection_active = False
+            self.rubberband.hide()
+            self.hide()
+            
+            # 恢复正常光标
+            self.setCursor(Qt.ArrowCursor)
+    
+    def keyPressEvent(self, event):
+        """按键事件，ESC键取消选择"""
+        if event.key() == Qt.Key_Escape:
+            self.selection_active = False
+            if self.rubberband:
+                self.rubberband.hide()
+            self.hide()
+            
+            # 恢复正常光标
+            self.setCursor(Qt.ArrowCursor)
 
 
 class BrightnessOverlay(QWidget):
@@ -96,6 +201,7 @@ class BrightnessOverlay(QWidget):
         self.is_high_contrast = False
         self.is_blue_light_filter = False
         self.special_window_rects = []  # 存储特殊窗口的矩形区域
+        self.selected_area = None  # 选定的屏幕区域
         
         # 设置窗口属性
         self.setWindowFlags(
@@ -135,6 +241,16 @@ class BrightnessOverlay(QWidget):
         
         # 设置Z-Order（稍微降低一些，允许特殊窗口在上层）
         self.lower()
+    
+    def set_selected_area(self, rect):
+        """设置选定的屏幕区域"""
+        self.selected_area = rect
+        self.update()  # 触发重绘
+    
+    def clear_selected_area(self):
+        """清除选定的屏幕区域"""
+        self.selected_area = None
+        self.update()  # 触发重绘
     
     def find_special_windows(self):
         """查找需要特殊处理的窗口（如火绒流量窗口、右键菜单等）"""
@@ -185,15 +301,28 @@ class BrightnessOverlay(QWidget):
         # 允许绘制区域合成
         painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
         
-        if self.is_high_contrast:
-            # 高对比度模式使用蓝色滤镜
-            painter.fillRect(self.rect(), QColor(0, 0, 255, self.opacity))
-        elif self.is_blue_light_filter:
-            # 防蓝光模式使用淡橙色滤镜（过滤蓝光）
-            painter.fillRect(self.rect(), QColor(255, 155, 30, 40 + self.opacity // 10))
+        if self.selected_area:
+            # 在选定区域模式下，只对选定区域应用滤镜效果
+            if self.is_high_contrast:
+                # 高对比度模式使用蓝色滤镜
+                painter.fillRect(self.selected_area, QColor(0, 0, 255, self.opacity))
+            elif self.is_blue_light_filter:
+                # 防蓝光模式使用淡橙色滤镜（过滤蓝光）
+                painter.fillRect(self.selected_area, QColor(255, 155, 30, 40 + self.opacity // 10))
+            else:
+                # 普通模式使用黑色遮罩
+                painter.fillRect(self.selected_area, QColor(0, 0, 0, self.opacity))
         else:
-            # 普通模式使用黑色遮罩
-            painter.fillRect(self.rect(), QColor(0, 0, 0, self.opacity))
+            # 全屏模式下应用滤镜效果
+            if self.is_high_contrast:
+                # 高对比度模式使用蓝色滤镜
+                painter.fillRect(self.rect(), QColor(0, 0, 255, self.opacity))
+            elif self.is_blue_light_filter:
+                # 防蓝光模式使用淡橙色滤镜（过滤蓝光）
+                painter.fillRect(self.rect(), QColor(255, 155, 30, 40 + self.opacity // 10))
+            else:
+                # 普通模式使用黑色遮罩
+                painter.fillRect(self.rect(), QColor(0, 0, 0, self.opacity))
         
         # 为特殊窗口区域创建透明区域（如火绒流量窗口、右键菜单等）
         if self.special_window_rects:

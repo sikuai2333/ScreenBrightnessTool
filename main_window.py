@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QTimeEdit, QGridLayout, QSpinBox, QComboBox, QShortcut,
                             QColorDialog, QFrame)
 from PyQt5.QtCore import Qt, QSettings, QTime, QTimer, QUrl
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QColor
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QColor, QPalette
 import webbrowser  # 使用Python标准库的webbrowser模块打开URL
 
 class ColorPickerButton(QPushButton):
@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
         self.timer_end_time = self.settings.value("timer_end_time", QTime(6, 0), type=QTime)
         self.timer_mode = self.settings.value("timer_mode", 0, type=int)
         self.eye_protect_intensity = self.settings.value("eye_protect_intensity", 70, type=int)
+        self.dark_mode = self.settings.value("dark_mode", False, type=bool)  # 新增暗黑模式设置
         
         # 设置应用图标
         self.app_icon = self.load_icon()
@@ -81,7 +82,10 @@ class MainWindow(QMainWindow):
         
         # 设置窗口属性
         self.setWindowTitle("屏幕亮度调节工具")
-        self.setFixedSize(500, 550)  # 增加窗口高度以适应新功能
+        self.setFixedSize(500, 600)  # 增加窗口高度以适应新功能
+        
+        # 设置应用主题
+        self.apply_theme()
         
         # 创建中央部件
         self.central_widget = QWidget()
@@ -277,6 +281,38 @@ class MainWindow(QMainWindow):
         
         self.hotkey_group.setLayout(self.hotkey_layout)
         
+        # 添加外观设置组
+        self.appearance_group = QGroupBox("外观设置")
+        self.appearance_layout = QGridLayout()
+        
+        # 暗黑模式开关
+        self.dark_mode_checkbox = QCheckBox("暗黑模式")
+        self.dark_mode_checkbox.setChecked(self.dark_mode)
+        self.dark_mode_checkbox.toggled.connect(self.toggle_dark_mode)
+        
+        # 添加区域选择模式选项
+        self.area_mode_checkbox = QCheckBox("区域亮度调节")
+        self.area_mode_checkbox.setChecked(self.settings.value("area_mode", False, type=bool))
+        self.area_mode_checkbox.toggled.connect(self.toggle_area_mode)
+        
+        # 添加区域选择按钮
+        self.select_area_btn = QPushButton("选择区域")
+        self.select_area_btn.clicked.connect(self.start_area_selection)
+        self.select_area_btn.setEnabled(self.area_mode_checkbox.isChecked())
+        
+        # 添加清除区域按钮
+        self.clear_area_btn = QPushButton("清除区域")
+        self.clear_area_btn.clicked.connect(self.clear_selected_area)
+        self.clear_area_btn.setEnabled(self.area_mode_checkbox.isChecked())
+        
+        # 布局
+        self.appearance_layout.addWidget(self.dark_mode_checkbox, 0, 0)
+        self.appearance_layout.addWidget(self.area_mode_checkbox, 1, 0)
+        self.appearance_layout.addWidget(self.select_area_btn, 1, 1)
+        self.appearance_layout.addWidget(self.clear_area_btn, 1, 2)
+        
+        self.appearance_group.setLayout(self.appearance_layout)
+        
         # 底部按钮区域
         self.bottom_layout = QHBoxLayout()
         
@@ -303,6 +339,7 @@ class MainWindow(QMainWindow):
         self.main_layout.addWidget(self.float_group)
         self.main_layout.addWidget(self.timer_group)
         self.main_layout.addWidget(self.hotkey_group)
+        self.main_layout.addWidget(self.appearance_group)  # 添加外观设置组
         self.main_layout.addStretch()
         self.main_layout.addLayout(self.bottom_layout)
         
@@ -320,6 +357,8 @@ class MainWindow(QMainWindow):
         self.timer_checkbox.toggled.connect(self.toggle_timer)
         self.exit_hotkey_combo.currentIndexChanged.connect(self.update_exit_hotkey)
         self.github_btn.clicked.connect(self.open_github)
+        self.dark_mode_checkbox.toggled.connect(self.toggle_dark_mode)
+        self.area_mode_checkbox.toggled.connect(self.toggle_area_mode)
         
         # 系统托盘图标
         self.setup_tray_icon()
@@ -480,6 +519,8 @@ class MainWindow(QMainWindow):
         self.timer_mode_combo.setCurrentIndex(0)
         self.exit_hotkey_combo.setCurrentIndex(0)
         self.floating_btn_checkbox.setChecked(True)
+        self.dark_mode_checkbox.setChecked(False)  # 重置暗黑模式设置
+        self.area_mode_checkbox.setChecked(False)  # 重置区域模式设置
         
         # 重置悬浮球颜色设置
         self.float_bg_color = QColor(30, 30, 30, 180)
@@ -505,6 +546,8 @@ class MainWindow(QMainWindow):
         self.settings.setValue("timer_mode", self.timer_mode_combo.currentIndex())
         self.settings.setValue("exit_shortcut", self.exit_shortcut)
         self.settings.setValue("show_floating_button", self.floating_btn_checkbox.isChecked())
+        self.settings.setValue("dark_mode", self.dark_mode)  # 保存暗黑模式设置
+        self.settings.setValue("area_mode", self.area_mode_checkbox.isChecked())  # 保存区域模式设置
         
         # 保存悬浮球颜色设置
         self.settings.setValue("float_bg_color", self.float_bg_color)
@@ -581,6 +624,142 @@ class MainWindow(QMainWindow):
     def open_github(self):
         """打开GitHub官方网站"""
         webbrowser.open("https://github.com/sikuai2333/ScreenBrightnessTool")
+
+    # 添加暗黑模式相关方法
+    def apply_theme(self):
+        """应用当前主题设置"""
+        if self.dark_mode:
+            self.set_dark_theme()
+        else:
+            self.set_light_theme()
+            
+    def set_dark_theme(self):
+        """设置暗黑主题"""
+        app = QApplication.instance()
+        palette = QPalette()
+        
+        # 设置暗色调色板
+        palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        palette.setColor(QPalette.WindowText, Qt.white)
+        palette.setColor(QPalette.Base, QColor(35, 35, 35))
+        palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ToolTipBase, QColor(25, 25, 25))
+        palette.setColor(QPalette.ToolTipText, Qt.white)
+        palette.setColor(QPalette.Text, Qt.white)
+        palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        palette.setColor(QPalette.ButtonText, Qt.white)
+        palette.setColor(QPalette.BrightText, Qt.red)
+        palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        palette.setColor(QPalette.HighlightedText, Qt.black)
+        
+        app.setPalette(palette)
+        
+        # 设置样式表
+        app.setStyleSheet("""
+            QGroupBox {
+                border: 1px solid #555;
+                border-radius: 5px;
+                margin-top: 10px;
+                padding-top: 15px;
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                subcontrol-position: top left;
+                padding: 0 5px;
+                color: #ddd;
+            }
+            QPushButton {
+                background-color: #444;
+                border: 1px solid #555;
+                border-radius: 3px;
+                color: #ddd;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #555;
+            }
+            QPushButton:pressed {
+                background-color: #666;
+            }
+            QSlider::groove:horizontal {
+                height: 8px;
+                background: #444;
+                border-radius: 4px;
+            }
+            QSlider::handle:horizontal {
+                background: #ddd;
+                border: 1px solid #777;
+                width: 18px;
+                border-radius: 9px;
+                margin: -5px 0;
+            }
+            QCheckBox {
+                color: #ddd;
+            }
+            QLabel {
+                color: #ddd;
+            }
+            QComboBox {
+                background-color: #444;
+                color: #ddd;
+                border: 1px solid #555;
+                border-radius: 3px;
+                padding: 2px 5px;
+            }
+            QTimeEdit {
+                background-color: #444;
+                color: #ddd;
+                border: 1px solid #555;
+                border-radius: 3px;
+                padding: 2px 5px;
+            }
+        """)
+    
+    def set_light_theme(self):
+        """设置亮色主题"""
+        app = QApplication.instance()
+        app.setPalette(app.style().standardPalette())
+        app.setStyleSheet("")
+        
+    def toggle_dark_mode(self, enabled):
+        """切换暗黑模式"""
+        self.dark_mode = enabled
+        self.apply_theme()
+        
+        # 保存设置
+        self.settings.setValue("dark_mode", enabled)
+
+    def toggle_area_mode(self, enabled):
+        """切换区域模式"""
+        # 启用或禁用相关按钮
+        self.select_area_btn.setEnabled(enabled)
+        self.clear_area_btn.setEnabled(enabled)
+        
+        # 如果禁用区域模式，清除已选区域
+        if not enabled:
+            self.clear_selected_area()
+    
+    def start_area_selection(self):
+        """启动区域选择过程"""
+        # 隐藏主窗口，避免干扰区域选择
+        self.hide()
+        
+        # 使用亮度控制器启动区域选择
+        if hasattr(self, 'brightness_control') and self.brightness_control:
+            self.brightness_control.start_area_selection()
+        
+        # 使用定时器稍后重新显示主窗口
+        QTimer.singleShot(1000, self.show)
+    
+    def clear_selected_area(self):
+        """清除已选择的区域"""
+        if hasattr(self, 'brightness_control') and self.brightness_control:
+            self.brightness_control.clear_selected_area()
+    
+    def set_brightness_control(self, brightness_control):
+        """设置亮度控制器的引用"""
+        self.brightness_control = brightness_control
 
 
 # 添加QShortcut类

@@ -23,6 +23,9 @@ class BrightnessApp:
         # 初始化主窗口
         self.main_window = MainWindow()
         
+        # 将亮度控制器引用传递给主窗口
+        self.main_window.set_brightness_control(self.brightness_control)
+        
         # 获取悬浮球颜色设置
         settings = QSettings("BrightnessControl", "BrightnessAdjuster")
         bg_color = settings.value("float_bg_color", QColor(30, 30, 30, 180))
