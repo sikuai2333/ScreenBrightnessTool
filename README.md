@@ -1,9 +1,9 @@
 <!--
  * @Author: sikuai2333 2643927725@qq.com
  * @Date: 2025-04-26 10:08:35
- * @LastEditors: sikuai2333 2643927725@qq.com
- * @LastEditTime: 2025-04-26 10:59:09
- * @FilePath: \屏幕亮度调节\README.md
+ * @LastEditors: sikuai
+ * @LastEditTime: 2025-06-13 09:00:24
+ * @FilePath: /屏幕亮度调节/README.md
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 -->
 # 屏幕亮度调节工具 (ScreenBrightnessTool)
@@ -62,7 +62,7 @@ pip install pyinstaller
 ```
 2. 打包
 ```bash
-pyinstaller main.py
+pyinstaller main.py --noconsole --onefile
 ```
 
 
