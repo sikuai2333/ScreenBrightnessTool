@@ -46,6 +46,7 @@
 - `floating_button.py` - 悬浮窗模块，实现屏幕上的悬浮控制功能
 - `icon.png` - 应用图标
 - `requirements.txt` - 依赖包列表
+- `.github/workflows/build-release.yml` - GitHub Actions自动化构建配置
 
 ## 安装与使用
 
@@ -103,6 +104,31 @@ pyinstaller --noconsole --name=ScreenBrightnessTool main.py
 # 2. 创建AppDir结构
 # 3. 使用appimagetool打包
 ```
+
+### 自动化构建与发布
+
+本项目配置了GitHub Actions自动构建流程，可以自动为Windows、macOS和Linux平台打包可执行文件。
+
+#### 如何使用自动化发布
+
+1. 确保代码已经提交并推送到GitHub仓库
+2. 创建一个新的标签（tag）并推送到仓库：
+   ```bash
+   git tag v1.0.0  # 创建名为v1.0.0的标签
+   git push origin v1.0.0  # 推送标签到远程仓库
+   ```
+3. GitHub Actions会自动触发构建流程，为所有平台打包可执行文件
+4. 构建完成后，文件会自动上传到GitHub Releases页面
+5. 你可以在GitHub仓库的"Actions"标签页查看构建进度和结果
+
+#### 自定义自动化流程
+
+如果需要自定义构建过程，可以编辑`.github/workflows/build-release.yml`文件：
+
+- 修改触发条件，例如改为在每次commit或pull request时构建
+- 添加更多的构建平台或配置
+- 调整构建参数，例如添加版本信息、应用图标等
+- 配置自动发布到其他平台，如PyPI、Docker Hub等
 
 ## 使用说明
 
@@ -239,6 +265,7 @@ The project consists of these main files:
 - `floating_button.py` - Floating widget module for on-screen brightness control
 - `icon.png` - Application icon
 - `requirements.txt` - List of dependencies
+- `.github/workflows/build-release.yml` - GitHub Actions automated build configuration
 
 ## Installation & Usage
 
@@ -296,6 +323,31 @@ pyinstaller --noconsole --name=ScreenBrightnessTool main.py
 # 2. Create AppDir structure
 # 3. Use appimagetool to build AppImage
 ```
+
+### Automated Build and Release
+
+This project is configured with GitHub Actions workflows to automatically build executables for Windows, macOS, and Linux platforms.
+
+#### How to Use Automated Releases
+
+1. Ensure your code is committed and pushed to the GitHub repository
+2. Create a new tag and push it to the repository:
+   ```bash
+   git tag v1.0.0  # Create a tag named v1.0.0
+   git push origin v1.0.0  # Push the tag to the remote repository
+   ```
+3. GitHub Actions will automatically trigger the build process for all platforms
+4. Once complete, files will be automatically uploaded to the GitHub Releases page
+5. You can view the build progress and results in the "Actions" tab of your GitHub repository
+
+#### Customizing the Automated Workflow
+
+If you need to customize the build process, edit the `.github/workflows/build-release.yml` file:
+
+- Modify triggers, such as building on every commit or pull request
+- Add more build platforms or configurations
+- Adjust build parameters like adding version info or application icons
+- Configure automatic deployment to other platforms like PyPI or Docker Hub
 
 ## User Guide
 
