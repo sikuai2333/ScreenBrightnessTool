@@ -1,7 +1,7 @@
 import sys
 import platform
 from PyQt5.QtWidgets import QWidget, QApplication
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QTimer, QRect
 from PyQt5.QtGui import QPainter, QColor
 
 class BrightnessControl:
@@ -95,12 +95,15 @@ class BrightnessOverlay(QWidget):
         self.opacity = 0  # 默认完全透明
         self.is_high_contrast = False
         self.is_blue_light_filter = False
+        self.special_window_rects = []  # 存储特殊窗口的矩形区域
         
         # 设置窗口属性
         self.setWindowFlags(
             Qt.FramelessWindowHint |  # 无边框
             Qt.WindowStaysOnTopHint |  # 总在最前
-            Qt.Tool  # 工具窗口，不显示在任务栏
+            Qt.Tool |  # 工具窗口，不显示在任务栏
+            Qt.WindowTransparentForInput |  # 使窗口对输入事件透明
+            Qt.WindowDoesNotAcceptFocus  # 窗口不接受焦点
         )
         
         # 设置窗口透明背景
@@ -124,6 +127,27 @@ class BrightnessOverlay(QWidget):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.ensure_on_top)
         self.update_timer.start(1000)  # 每秒执行一次
+        
+        # 使用定时器查找并记录特殊窗口
+        self.special_window_timer = QTimer(self)
+        self.special_window_timer.timeout.connect(self.find_special_windows)
+        self.special_window_timer.start(500)  # 每0.5秒执行一次
+        
+        # 设置Z-Order（稍微降低一些，允许特殊窗口在上层）
+        self.lower()
+    
+    def find_special_windows(self):
+        """查找需要特殊处理的窗口（如火绒流量窗口、右键菜单等）"""
+        # 在实际应用中，可能需要使用平台特定API来获取窗口信息
+        # 这里仅作为示例，简化处理
+        self.special_window_rects = []
+        
+        # 获取所有顶层窗口（Windows平台可使用Win32 API）
+        # 此处是简化示例，实际实现需要与具体平台API交互
+        # self.special_window_rects.append(QRect(x, y, width, height))
+        
+        # 标记需要更新
+        self.update()
     
     def set_opacity(self, opacity):
         """设置遮罩的不透明度"""
@@ -153,13 +177,13 @@ class BrightnessOverlay(QWidget):
         # 如果屏幕几何信息变化了，更新窗口位置和大小
         if self.geometry() != current_geometry:
             self.setGeometry(current_geometry)
-        
-        # 确保窗口在最上层
-        self.raise_()
     
     def paintEvent(self, event):
         """绘制遮罩"""
         painter = QPainter(self)
+        
+        # 允许绘制区域合成
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
         
         if self.is_high_contrast:
             # 高对比度模式使用蓝色滤镜
@@ -170,5 +194,14 @@ class BrightnessOverlay(QWidget):
         else:
             # 普通模式使用黑色遮罩
             painter.fillRect(self.rect(), QColor(0, 0, 0, self.opacity))
+        
+        # 为特殊窗口区域创建透明区域（如火绒流量窗口、右键菜单等）
+        if self.special_window_rects:
+            # 设置擦除模式
+            painter.setCompositionMode(QPainter.CompositionMode_Clear)
+            
+            for rect in self.special_window_rects:
+                # 擦除特殊窗口区域
+                painter.fillRect(rect, Qt.transparent)
         
         painter.end() 

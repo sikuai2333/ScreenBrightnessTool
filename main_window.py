@@ -5,8 +5,9 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QApplication, QSystemTrayIcon, QMenu, QAction,
                             QTimeEdit, QGridLayout, QSpinBox, QComboBox, QShortcut,
                             QColorDialog, QFrame)
-from PyQt5.QtCore import Qt, QSettings, QTime, QTimer
+from PyQt5.QtCore import Qt, QSettings, QTime, QTimer, QUrl
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QColor
+import webbrowser  # 使用Python标准库的webbrowser模块打开URL
 
 class ColorPickerButton(QPushButton):
     """颜色选择按钮"""
@@ -57,7 +58,9 @@ class MainWindow(QMainWindow):
         self.blue_light_filter = self.settings.value("blue_light_filter", False, type=bool)
         self.timer_enabled = self.settings.value("timer_enabled", False, type=bool)
         self.timer_time = self.settings.value("timer_time", QTime(22, 0), type=QTime)
+        self.timer_end_time = self.settings.value("timer_end_time", QTime(6, 0), type=QTime)
         self.timer_mode = self.settings.value("timer_mode", 0, type=int)
+        self.eye_protect_intensity = self.settings.value("eye_protect_intensity", 70, type=int)
         
         # 设置应用图标
         self.app_icon = self.load_icon()
@@ -89,59 +92,69 @@ class MainWindow(QMainWindow):
         
         # 创建亮度调节组
         self.brightness_group = QGroupBox("屏幕亮度调节")
-        self.brightness_layout = QVBoxLayout()
-        
-        # 亮度滑动条和标签
-        self.slider_layout = QHBoxLayout()
-        
-        self.brightness_label = QLabel("亮度:")
-        self.brightness_label.setFont(QFont("Arial", 10))
+        self.brightness_layout = QGridLayout()
         
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(10)
         self.brightness_slider.setMaximum(100)
         self.brightness_slider.setValue(self.brightness_value)
-        self.brightness_slider.setTickPosition(QSlider.TicksBelow)
-        self.brightness_slider.setTickInterval(10)
+        self.brightness_slider.setFixedWidth(300)
         
         self.brightness_value_label = QLabel(f"{self.brightness_value}%")
-        self.brightness_value_label.setMinimumWidth(40)
+        self.brightness_value_label.setStyleSheet("font-weight: bold;")
         
-        self.slider_layout.addWidget(self.brightness_label)
-        self.slider_layout.addWidget(self.brightness_slider)
-        self.slider_layout.addWidget(self.brightness_value_label)
+        # 第一行：亮度滑动条和数值
+        self.brightness_layout.addWidget(QLabel("亮度:"), 0, 0)
+        self.brightness_layout.addWidget(self.brightness_slider, 0, 1)
+        self.brightness_layout.addWidget(self.brightness_value_label, 0, 2)
         
-        # 显示模式选项
-        self.display_options_layout = QHBoxLayout()
+        # 护眼模式强度设置
+        self.eye_protect_intensity_label = QLabel("护眼模式强度:")
+        self.eye_protect_intensity_slider = QSlider(Qt.Horizontal)
+        self.eye_protect_intensity_slider.setMinimum(30)  # 最低亮度为30%
+        self.eye_protect_intensity_slider.setMaximum(90)  # 最高亮度为90%
+        self.eye_protect_intensity_slider.setValue(self.eye_protect_intensity)
+        self.eye_protect_intensity_slider.setFixedWidth(300)
+        self.eye_protect_intensity_value_label = QLabel(f"{self.eye_protect_intensity}%")
+        self.eye_protect_intensity_value_label.setStyleSheet("font-weight: bold;")
         
-        # 高对比度模式选项
+        # 第二行：护眼模式强度滑动条和数值
+        self.brightness_layout.addWidget(self.eye_protect_intensity_label, 1, 0)
+        self.brightness_layout.addWidget(self.eye_protect_intensity_slider, 1, 1)
+        self.brightness_layout.addWidget(self.eye_protect_intensity_value_label, 1, 2)
+        
+        # 模式勾选框
+        self.checkbox_layout = QHBoxLayout()
         self.high_contrast_checkbox = QCheckBox("增强对比度")
-        
-        # 防蓝光模式选项
+        self.high_contrast_checkbox.setChecked(self.settings.value("high_contrast", False, type=bool))
         self.blue_light_checkbox = QCheckBox("防蓝光模式")
         self.blue_light_checkbox.setChecked(self.blue_light_filter)
         
-        self.display_options_layout.addWidget(self.high_contrast_checkbox)
-        self.display_options_layout.addWidget(self.blue_light_checkbox)
+        self.checkbox_layout.addWidget(self.high_contrast_checkbox)
+        self.checkbox_layout.addWidget(self.blue_light_checkbox)
+        self.checkbox_layout.addStretch()
         
-        # 添加到亮度调节组
-        self.brightness_layout.addLayout(self.slider_layout)
-        self.brightness_layout.addLayout(self.display_options_layout)
+        # 第三行：特殊模式复选框
+        self.brightness_layout.addLayout(self.checkbox_layout, 2, 0, 1, 3)
+        
         self.brightness_group.setLayout(self.brightness_layout)
         
-        # 模式按钮组
-        self.modes_group = QGroupBox("屏幕亮度切换")
+        # 预设模式
+        self.modes_group = QGroupBox("预设模式")
         self.modes_layout = QHBoxLayout()
         
         self.normal_mode_btn = QPushButton("正常模式")
+        self.normal_mode_btn.setStyleSheet("background-color: #f0f0f0;")
+        
         self.dim_mode_btn = QPushButton("护眼模式")
+        self.dim_mode_btn.setStyleSheet("background-color: #e6f5d0;")
+        
         self.night_mode_btn = QPushButton("夜间模式")
-        self.custom_mode_btn = QPushButton("自定模式")
+        self.night_mode_btn.setStyleSheet("background-color: #d0d9f5;")
         
         self.modes_layout.addWidget(self.normal_mode_btn)
         self.modes_layout.addWidget(self.dim_mode_btn)
         self.modes_layout.addWidget(self.night_mode_btn)
-        self.modes_layout.addWidget(self.custom_mode_btn)
         
         self.modes_group.setLayout(self.modes_layout)
         
@@ -209,10 +222,15 @@ class MainWindow(QMainWindow):
         self.timer_checkbox = QCheckBox("启用定时切换")
         self.timer_checkbox.setChecked(self.timer_enabled)
         
-        self.timer_time_label = QLabel("定时时间:")
-        self.timer_time_edit = QTimeEdit()
-        self.timer_time_edit.setTime(self.timer_time)
-        self.timer_time_edit.setDisplayFormat("HH:mm")
+        self.timer_start_time_label = QLabel("开始时间:")
+        self.timer_start_time_edit = QTimeEdit()
+        self.timer_start_time_edit.setTime(self.timer_time)
+        self.timer_start_time_edit.setDisplayFormat("HH:mm")
+        
+        self.timer_end_time_label = QLabel("结束时间:")
+        self.timer_end_time_edit = QTimeEdit()
+        self.timer_end_time_edit.setTime(self.timer_end_time)
+        self.timer_end_time_edit.setDisplayFormat("HH:mm")
         
         self.timer_mode_label = QLabel("定时模式:")
         self.timer_mode_combo = QComboBox()
@@ -222,13 +240,17 @@ class MainWindow(QMainWindow):
         # 第一行：启用定时
         self.timer_layout.addWidget(self.timer_checkbox, 0, 0, 1, 2)
         
-        # 第二行：定时时间
-        self.timer_layout.addWidget(self.timer_time_label, 1, 0)
-        self.timer_layout.addWidget(self.timer_time_edit, 1, 1)
+        # 第二行：开始时间
+        self.timer_layout.addWidget(self.timer_start_time_label, 1, 0)
+        self.timer_layout.addWidget(self.timer_start_time_edit, 1, 1)
         
-        # 第三行：定时模式
-        self.timer_layout.addWidget(self.timer_mode_label, 2, 0)
-        self.timer_layout.addWidget(self.timer_mode_combo, 2, 1)
+        # 第三行：结束时间
+        self.timer_layout.addWidget(self.timer_end_time_label, 2, 0)
+        self.timer_layout.addWidget(self.timer_end_time_edit, 2, 1)
+        
+        # 第四行：定时模式
+        self.timer_layout.addWidget(self.timer_mode_label, 3, 0)
+        self.timer_layout.addWidget(self.timer_mode_combo, 3, 1)
         
         self.timer_group.setLayout(self.timer_layout)
         
@@ -260,11 +282,17 @@ class MainWindow(QMainWindow):
         
         self.autostart_checkbox = QCheckBox("开机自启动")
         self.autostart_checkbox.setChecked(self.auto_start)
-        
+
+        # 添加GitHub链接按钮
+        self.github_btn = QPushButton("官方网站")
+        self.github_btn.setIcon(self.app_icon if self.app_icon else QIcon())
+        self.github_btn.setCursor(Qt.PointingHandCursor)
+
         self.reset_btn = QPushButton("恢复默认")
         self.apply_btn = QPushButton("应用设置")
         
         self.bottom_layout.addWidget(self.autostart_checkbox)
+        self.bottom_layout.addWidget(self.github_btn)
         self.bottom_layout.addStretch()
         self.bottom_layout.addWidget(self.reset_btn)
         self.bottom_layout.addWidget(self.apply_btn)
@@ -280,8 +308,9 @@ class MainWindow(QMainWindow):
         
         # 连接信号和槽
         self.brightness_slider.valueChanged.connect(self.update_brightness)
+        self.eye_protect_intensity_slider.valueChanged.connect(self.update_eye_protect_intensity)
         self.normal_mode_btn.clicked.connect(lambda: self.set_brightness_mode(100))
-        self.dim_mode_btn.clicked.connect(lambda: self.set_brightness_mode(70))
+        self.dim_mode_btn.clicked.connect(self.set_eye_protect_mode)
         self.night_mode_btn.clicked.connect(lambda: self.set_brightness_mode(40))
         self.reset_btn.clicked.connect(self.reset_settings)
         self.apply_btn.clicked.connect(self.apply_settings)
@@ -290,6 +319,7 @@ class MainWindow(QMainWindow):
         self.floating_btn_checkbox.toggled.connect(self.toggle_floating_button)
         self.timer_checkbox.toggled.connect(self.toggle_timer)
         self.exit_hotkey_combo.currentIndexChanged.connect(self.update_exit_hotkey)
+        self.github_btn.clicked.connect(self.open_github)
         
         # 系统托盘图标
         self.setup_tray_icon()
@@ -324,8 +354,18 @@ class MainWindow(QMainWindow):
         self.brightness_value_label.setText(f"{value}%")
         # 信号会连接到亮度控制类来实际改变亮度
     
+    def update_eye_protect_intensity(self, value):
+        """更新护眼模式强度"""
+        self.eye_protect_intensity = value
+        self.eye_protect_intensity_value_label.setText(f"{value}%")
+        self.settings.setValue("eye_protect_intensity", value)
+    
     def set_brightness_mode(self, value):
         self.brightness_slider.setValue(value)
+    
+    def set_eye_protect_mode(self):
+        """使用自定义护眼模式强度"""
+        self.brightness_slider.setValue(self.eye_protect_intensity)
     
     def toggle_autostart(self, state):
         self.auto_start = state
@@ -347,7 +387,8 @@ class MainWindow(QMainWindow):
     
     def toggle_timer(self, state):
         self.timer_enabled = state
-        self.timer_time_edit.setEnabled(state)
+        self.timer_start_time_edit.setEnabled(state)
+        self.timer_end_time_edit.setEnabled(state)
         self.timer_mode_combo.setEnabled(state)
     
     def update_exit_hotkey(self, index):
@@ -381,36 +422,61 @@ class MainWindow(QMainWindow):
         self.scheduler_timer.start(60000)  # 每分钟检查一次
     
     def check_scheduled_tasks(self):
-        # 检查是否开启了定时功能且时间到了
+        # 检查是否开启了定时功能
         if not self.timer_enabled:
             return
         
         current_time = QTime.currentTime()
-        scheduled_time = self.timer_time_edit.time()
+        scheduled_start_time = self.timer_start_time_edit.time()
+        scheduled_end_time = self.timer_end_time_edit.time()
         
-        # 如果当前时间与设定时间的小时和分钟相同
-        if current_time.hour() == scheduled_time.hour() and current_time.minute() == scheduled_time.minute():
-            # 根据选择的模式执行对应操作
-            mode_index = self.timer_mode_combo.currentIndex()
-            if mode_index == 0:  # 护眼模式
-                self.set_brightness_mode(70)
-                self.blue_light_checkbox.setChecked(False)
-                self.high_contrast_checkbox.setChecked(False)
-            elif mode_index == 1:  # 夜间模式
-                self.set_brightness_mode(40)
-                self.blue_light_checkbox.setChecked(False)
-                self.high_contrast_checkbox.setChecked(False)
-            elif mode_index == 2:  # 防蓝光模式
-                self.blue_light_checkbox.setChecked(True)
-                self.high_contrast_checkbox.setChecked(False)
+        # 跨天情况处理
+        is_in_time_range = False
+        if scheduled_start_time < scheduled_end_time:
+            # 正常情况：开始时间早于结束时间
+            is_in_time_range = scheduled_start_time <= current_time < scheduled_end_time
+        else:
+            # 跨天情况：开始时间晚于结束时间（例如晚上10点到早上6点）
+            is_in_time_range = current_time >= scheduled_start_time or current_time < scheduled_end_time
+        
+        # 根据是否在时间范围内执行相应操作
+        mode_index = self.timer_mode_combo.currentIndex()
+        
+        # 如果在时间范围内且之前未应用设置
+        if is_in_time_range and not getattr(self, 'timer_applied', False):
+            self.apply_timer_mode(mode_index)
+            self.timer_applied = True
+        # 如果不在时间范围内且之前已应用设置
+        elif not is_in_time_range and getattr(self, 'timer_applied', False):
+            # 恢复正常模式
+            self.set_brightness_mode(100)
+            self.blue_light_checkbox.setChecked(False)
+            self.high_contrast_checkbox.setChecked(False)
+            self.timer_applied = False
+    
+    def apply_timer_mode(self, mode_index):
+        """应用定时模式设置"""
+        if mode_index == 0:  # 护眼模式
+            self.set_brightness_mode(self.eye_protect_intensity)
+            self.blue_light_checkbox.setChecked(False)
+            self.high_contrast_checkbox.setChecked(False)
+        elif mode_index == 1:  # 夜间模式
+            self.set_brightness_mode(40)
+            self.blue_light_checkbox.setChecked(False)
+            self.high_contrast_checkbox.setChecked(False)
+        elif mode_index == 2:  # 防蓝光模式
+            self.blue_light_checkbox.setChecked(True)
+            self.high_contrast_checkbox.setChecked(False)
     
     def reset_settings(self):
         self.brightness_slider.setValue(100)
+        self.eye_protect_intensity_slider.setValue(70)
         self.high_contrast_checkbox.setChecked(False)
         self.blue_light_checkbox.setChecked(False)
         self.autostart_checkbox.setChecked(False)
         self.timer_checkbox.setChecked(False)
-        self.timer_time_edit.setTime(QTime(22, 0))
+        self.timer_start_time_edit.setTime(QTime(22, 0))
+        self.timer_end_time_edit.setTime(QTime(6, 0))
         self.timer_mode_combo.setCurrentIndex(0)
         self.exit_hotkey_combo.setCurrentIndex(0)
         self.floating_btn_checkbox.setChecked(True)
@@ -430,10 +496,12 @@ class MainWindow(QMainWindow):
     def apply_settings(self):
         # 保存设置
         self.settings.setValue("brightness", self.brightness_value)
+        self.settings.setValue("eye_protect_intensity", self.eye_protect_intensity)
         self.settings.setValue("auto_start", self.auto_start)
         self.settings.setValue("blue_light_filter", self.blue_light_filter)
         self.settings.setValue("timer_enabled", self.timer_enabled)
-        self.settings.setValue("timer_time", self.timer_time_edit.time())
+        self.settings.setValue("timer_time", self.timer_start_time_edit.time())
+        self.settings.setValue("timer_end_time", self.timer_end_time_edit.time())
         self.settings.setValue("timer_mode", self.timer_mode_combo.currentIndex())
         self.settings.setValue("exit_shortcut", self.exit_shortcut)
         self.settings.setValue("show_floating_button", self.floating_btn_checkbox.isChecked())
@@ -509,6 +577,10 @@ class MainWindow(QMainWindow):
         # 设置悬浮球的初始颜色
         if self.floating_button:
             self.floating_button.set_colors(self.float_bg_color, self.float_text_color)
+
+    def open_github(self):
+        """打开GitHub官方网站"""
+        webbrowser.open("https://github.com/sikuai2333/ScreenBrightnessTool")
 
 
 # 添加QShortcut类

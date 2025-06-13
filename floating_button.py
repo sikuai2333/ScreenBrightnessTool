@@ -211,8 +211,13 @@ class FloatingButton(QWidget):
         normal_action = menu.addAction("正常模式")
         normal_action.triggered.connect(lambda: self.set_brightness(100))
         
-        dim_action = menu.addAction("护眼模式")
-        dim_action.triggered.connect(lambda: self.set_brightness(70))
+        # 获取护眼模式强度
+        eye_protect_intensity = 70  # 默认值
+        if self.parent_window and hasattr(self.parent_window, 'eye_protect_intensity'):
+            eye_protect_intensity = self.parent_window.eye_protect_intensity
+        
+        dim_action = menu.addAction(f"护眼模式 ({eye_protect_intensity}%)")
+        dim_action.triggered.connect(lambda: self.set_brightness(eye_protect_intensity))
         
         night_action = menu.addAction("夜间模式")
         night_action.triggered.connect(lambda: self.set_brightness(40))

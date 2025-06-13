@@ -18,6 +18,7 @@
 - 支持多个显示器
 - 预设亮度模式：正常模式、护眼模式、夜间模式
 - 支持高对比度和防蓝光模式
+- **护眼模式强度调节**：可自定义护眼模式的亮度值(30%-90%)
 - 系统托盘图标，最小化后仍可运行
 - 开机自启动设置
 - 跨平台支持（Windows、macOS、Linux）
@@ -27,7 +28,11 @@
   - 自定义悬浮窗背景颜色和文字颜色
   - 主窗口打开时自动隐藏，关闭或最小化时显示
 - **热键支持**：支持使用Ctrl+E或自定义热键退出软件
-- **定时功能**：可在指定时间自动切换预设模式
+- **定时功能**：
+  - 支持时间段设置，可指定开始时间和结束时间
+  - 在时间段内自动应用选定模式，时间段外恢复正常模式
+  - 支持跨日设置（如晚上10点到次日早上6点）
+- **官方网站**：提供GitHub链接，可获取最新版本和提交问题
 
 
 ## 安装与使用
@@ -67,14 +72,15 @@ pyinstaller main.py
 ### 主窗口功能
 
 1. 通过滑动条调整屏幕亮度（10%-100%）
-2. 点击预设模式按钮快速切换亮度：
+2. 可调整护眼模式强度（30%-90%），定制个人舒适度
+3. 点击预设模式按钮快速切换亮度：
    - 正常模式（100%亮度）
-   - 护眼模式（70%亮度）
+   - 护眼模式（自定义强度，默认70%亮度）
    - 夜间模式（40%亮度）
-3. 勾选"增强对比度"可启用高对比度滤镜
-4. 勾选"防蓝光模式"可减少屏幕蓝光
-5. 勾选"开机自启动"可设置系统启动时自动运行
-6. 关闭窗口时程序会最小化到系统托盘，点击托盘图标可重新打开界面
+4. 勾选"增强对比度"可启用高对比度滤镜
+5. 勾选"防蓝光模式"可减少屏幕蓝光
+6. 勾选"开机自启动"可设置系统启动时自动运行
+7. 关闭窗口时程序会最小化到系统托盘，点击托盘图标可重新打开界面
 
 ### 悬浮窗功能
 
@@ -91,9 +97,17 @@ pyinstaller main.py
 
 ### 定时功能
 
-- 可以设置在指定时间自动切换到特定模式
+- 可以设置时间段（开始时间和结束时间）自动切换特定模式
+- 支持设置跨日时间段（如晚上10点到次日早上6点）
+- 在设定时间段内自动应用选定模式，时间段外恢复正常模式
 - 支持的定时模式包括：护眼模式、夜间模式和防蓝光模式
 - 结合开机自启动功能，可以实现日常使用的自动化亮度调节
+
+### 其他功能
+
+- 点击"官方网站"按钮可直接访问GitHub项目页面
+- 通过"应用设置"按钮保存当前配置，下次启动自动应用
+- "恢复默认"按钮可重置所有设置
 
 ## 开发说明
 
@@ -111,6 +125,12 @@ pyinstaller main.py
 - 跨平台兼容性强
 - 不需要管理员权限
 - 可以应用于不支持硬件亮度调节的设备
+
+### 最近修复的问题
+
+- 修复了悬浮窗（如火绒流量窗口、右键菜单等）在遮罩层下方闪烁的问题
+- 优化了遮罩层窗口的堆叠顺序，减少对其他窗口的干扰
+- 改进了窗口属性设置，增强了与系统的兼容性
 
 ## 贡献指南
 
@@ -140,6 +160,7 @@ A cross-platform screen brightness adjustment tool based on PyQt5, which control
 - Support for multiple displays
 - Preset brightness modes: Normal, Eye Protection, and Night modes
 - High-contrast and Blue-light filter modes
+- **Eye Protection Intensity Control**: Customize the brightness level (30%-90%) for eye protection mode
 - System tray icon for background operation
 - Auto-start on system boot
 - Cross-platform compatibility (Windows, macOS, Linux)
@@ -149,7 +170,11 @@ A cross-platform screen brightness adjustment tool based on PyQt5, which control
   - Customizable background and text colors
   - Auto-hides when main window is visible
 - **Hotkey Support**: Exit application using Ctrl+E or custom hotkeys
-- **Timer Function**: Automatically switch to preset modes at specified times
+- **Timer Function**: 
+  - Supports time range setting with start and end times
+  - Automatically applies selected mode during the set time range, and restores normal mode outside that range
+  - Supports cross-day settings (e.g., 10 PM to 6 AM next day)
+- **Official Website**: Provides GitHub link for latest versions and issue reporting
 
 ## Screenshots
 
@@ -174,19 +199,32 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### Building Executable
+
+1. Install PyInstaller:
+```bash
+pip install pyinstaller
+```
+
+2. Build:
+```bash
+pyinstaller main.py
+```
+
 ## User Guide
 
 ### Main Window
 
 1. Adjust screen brightness (10%-100%) using the slider
-2. Click preset mode buttons to quickly change brightness:
+2. Customize Eye Protection mode intensity (30%-90%) for personal comfort
+3. Click preset mode buttons to quickly change brightness:
    - Normal Mode (100% brightness)
-   - Eye Protection Mode (70% brightness)
+   - Eye Protection Mode (customizable intensity, 70% by default)
    - Night Mode (40% brightness)
-3. Check "Enhanced Contrast" to enable high contrast filter
-4. Check "Blue Light Filter" to reduce screen blue light
-5. Check "Start with system" to run the program on system startup
-6. Closing the window minimizes the program to system tray
+4. Check "Enhanced Contrast" to enable high contrast filter
+5. Check "Blue Light Filter" to reduce screen blue light
+6. Check "Start with system" to run the program on system startup
+7. Closing the window minimizes the program to system tray
 
 ### Floating Widget
 
@@ -203,9 +241,17 @@ python main.py
 
 ### Timer Function
 
-- Set automatic mode switching at specified times
+- Set time ranges (start and end times) for automatic mode switching
+- Support cross-day time ranges (e.g., 10 PM to 6 AM next day)
+- Automatically applies the selected mode during set time range, and restores normal mode outside that range
 - Supported timer modes: Eye Protection, Night Mode, and Blue Light Filter
 - Combined with auto-start, enables automated daily brightness control
+
+### Other Features
+
+- Click "Official Website" button to visit the GitHub project page
+- Save current configuration using "Apply Settings" button for automatic application on next startup
+- "Reset Defaults" button to restore all settings to their default values
 
 ## Development
 
@@ -223,6 +269,12 @@ The program adjusts screen brightness by overlaying a semi-transparent mask on t
 - Strong cross-platform compatibility
 - No administrator privileges required
 - Works on devices without hardware brightness adjustment support
+
+### Recently Fixed Issues
+
+- Fixed flickering issues with floating windows (like HuoRong traffic monitor, right-click menus, etc.) under the brightness overlay
+- Optimized window stacking order to reduce interference with other windows
+- Improved window property settings for better system compatibility
 
 ## Contributing
 

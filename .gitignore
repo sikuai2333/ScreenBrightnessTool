@@ -1,1 +1,8 @@
 /__pycache__
+/dist/*
+/build/*
+/venv/*
+/env/*
+/logs/*
+/cache/*
+__pycache__/*
