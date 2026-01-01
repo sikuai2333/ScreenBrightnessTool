@@ -47,3 +47,19 @@ desktop.ini
 config.ini
 settings.json
 credentials.json
+
+# 项目特定文件
+nul
+*.pyc
+.claude/
+cache/
+
+# PyQt5相关
+*.ui.py
+moc_*.cpp
+ui_*.py
+
+# 虚拟环境
+.venv/
+env/
+venv*/
