@@ -277,6 +277,7 @@ class MainWindow(QMainWindow):
         self.timer_group = QGroupBox("定时切换")
         self.timer_layout = QGridLayout()
         self.timer_layout.setColumnStretch(1, 1)  # 让第二列自动扩展
+        self.timer_layout.setContentsMargins(10, 0, 10, 10)  # 设置边距：左、上、右、下
 
         self.timer_checkbox = QCheckBox("启用定时切换")
         self.timer_checkbox.setChecked(self.timer_enabled)
