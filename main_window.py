@@ -148,13 +148,64 @@ class MainWindow(QMainWindow):
         self.modes_layout = QHBoxLayout()
         
         self.normal_mode_btn = QPushButton("正常模式")
-        self.normal_mode_btn.setStyleSheet("background-color: #f0f0f0;")
+        self.normal_mode_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f0f0f0;
+                color: #2c3e50;
+                border: 1px solid #d0d0d0;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #e0e0e0;
+                border: 1px solid #b0b0b0;
+            }
+            QPushButton:pressed {
+                background-color: #d0d0d0;
+            }
+        """)
         
         self.dim_mode_btn = QPushButton("护眼模式")
-        self.dim_mode_btn.setStyleSheet("background-color: #e6f5d0;")
+        self.dim_mode_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e6f5d0;
+                color: #2c3e50;
+                border: 1px solid #c5e5a0;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #d6e5c0;
+                border: 1px solid #b5d590;
+            }
+            QPushButton:pressed {
+                background-color: #c6d5b0;
+            }
+        """)
         
         self.night_mode_btn = QPushButton("夜间模式")
-        self.night_mode_btn.setStyleSheet("background-color: #d0d9f5;")
+        self.night_mode_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #d0d9f5;
+                color: #2c3e50;
+                border: 1px solid #b0c0e5;
+                border-radius: 5px;
+                padding: 8px 16px;
+                font-size: 13px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #c0c9e5;
+                border: 1px solid #a0b0d5;
+            }
+            QPushButton:pressed {
+                background-color: #b0b9d5;
+            }
+        """)
         
         self.modes_layout.addWidget(self.normal_mode_btn)
         self.modes_layout.addWidget(self.dim_mode_btn)
