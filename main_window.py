@@ -82,7 +82,7 @@ class MainWindow(QMainWindow):
         
         # 设置窗口属性
         self.setWindowTitle("屏幕亮度调节工具")
-        self.setFixedSize(500, 600)  # 增加窗口高度以适应新功能
+        self.setFixedSize(500, 650)  # 增加窗口高度以适应定时切换内容
         
         # 设置应用主题
         self.apply_theme()
