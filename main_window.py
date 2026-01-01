@@ -347,7 +347,8 @@ class MainWindow(QMainWindow):
         # 添加外观设置组
         self.appearance_group = QGroupBox("外观设置")
         self.appearance_layout = QGridLayout()
-        
+        self.appearance_layout.setContentsMargins(10, 0, 10, 10)  # 设置边距：左、上、右、下
+
         # 暗黑模式开关
         self.dark_mode_checkbox = QCheckBox("暗黑模式")
         self.dark_mode_checkbox.setChecked(self.dark_mode)
