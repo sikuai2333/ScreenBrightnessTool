@@ -1,8 +1,8 @@
 import sys
 import os
 import platform
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QSettings, QTime
+from PyQt5.QtWidgets import QApplication, QMessageBox
+from PyQt5.QtCore import QSettings, QTime, QLockFile, QDir
 from PyQt5.QtGui import QIcon, QColor
 from main_window import MainWindow
 from brightness_control import BrightnessControl
@@ -13,7 +13,23 @@ class BrightnessApp:
         self.app = QApplication(sys.argv)
         self.app.setApplicationName("屏幕亮度调节工具")
         self.app.setOrganizationName("BrightnessControl")
-        
+
+        # 创建锁文件以防止多实例运行
+        lock_file_path = QDir.temp().absoluteFilePath("ScreenBrightnessTool.lock")
+        self.lock_file = QLockFile(lock_file_path)
+        self.lock_file.setStaleLockTime(0)  # 不自动清理过期锁
+
+        # 尝试获取锁
+        if not self.lock_file.tryLock(100):
+            # 如果无法获取锁，说明已有实例在运行
+            QMessageBox.warning(
+                None,
+                "程序已运行",
+                "屏幕亮度调节工具已经在运行中！\n请检查系统托盘或任务栏。",
+                QMessageBox.Ok
+            )
+            sys.exit(0)
+
         # 设置应用程序图标
         self.set_app_icon()
         
@@ -267,10 +283,14 @@ class BrightnessApp:
     def cleanup(self):
         """清理资源"""
         self.brightness_control.cleanup()
-        
+
         # 关闭悬浮按钮
         if self.floating_button:
             self.floating_button.close()
+
+        # 释放锁文件
+        if hasattr(self, 'lock_file') and self.lock_file.isLocked():
+            self.lock_file.unlock()
 
 
 if __name__ == "__main__":
