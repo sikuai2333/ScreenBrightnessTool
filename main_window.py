@@ -97,6 +97,7 @@ class MainWindow(QMainWindow):
         # 创建亮度调节组
         self.brightness_group = QGroupBox("屏幕亮度调节")
         self.brightness_layout = QGridLayout()
+        self.brightness_layout.setContentsMargins(10, 0, 10, 10)  # 设置边距：左、上、右、下
         
         self.brightness_slider = QSlider(Qt.Horizontal)
         self.brightness_slider.setMinimum(10)
