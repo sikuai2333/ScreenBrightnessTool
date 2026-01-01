@@ -216,13 +216,15 @@ class MainWindow(QMainWindow):
         # 悬浮球设置组
         self.float_group = QGroupBox("悬浮窗设置")
         self.float_layout = QGridLayout()
-        
+        self.float_layout.setColumnStretch(1, 1)  # 让第二列自动扩展
+
         # 显示悬浮球选项
         self.floating_btn_checkbox = QCheckBox("显示悬浮窗")
         self.floating_btn_checkbox.setChecked(self.settings.value("show_floating_button", True, type=bool))
-        
+
         # 背景颜色选择
         self.float_bg_color_label = QLabel("背景颜色:")
+        self.float_bg_color_label.setMinimumWidth(80)  # 设置最小宽度
         
         class BgColorButton(ColorPickerButton):
             def __init__(self, parent_window, initial_color):
@@ -243,6 +245,7 @@ class MainWindow(QMainWindow):
         
         # 文字颜色选择
         self.float_text_color_label = QLabel("文字颜色:")
+        self.float_text_color_label.setMinimumWidth(80)  # 设置最小宽度
         
         class TextColorButton(ColorPickerButton):
             def __init__(self, parent_window, initial_color):
@@ -273,21 +276,25 @@ class MainWindow(QMainWindow):
         # 定时功能组
         self.timer_group = QGroupBox("定时切换")
         self.timer_layout = QGridLayout()
-        
+        self.timer_layout.setColumnStretch(1, 1)  # 让第二列自动扩展
+
         self.timer_checkbox = QCheckBox("启用定时切换")
         self.timer_checkbox.setChecked(self.timer_enabled)
-        
+
         self.timer_start_time_label = QLabel("开始时间:")
+        self.timer_start_time_label.setMinimumWidth(80)  # 设置最小宽度
         self.timer_start_time_edit = QTimeEdit()
         self.timer_start_time_edit.setTime(self.timer_time)
         self.timer_start_time_edit.setDisplayFormat("HH:mm")
-        
+
         self.timer_end_time_label = QLabel("结束时间:")
+        self.timer_end_time_label.setMinimumWidth(80)  # 设置最小宽度
         self.timer_end_time_edit = QTimeEdit()
         self.timer_end_time_edit.setTime(self.timer_end_time)
         self.timer_end_time_edit.setDisplayFormat("HH:mm")
-        
+
         self.timer_mode_label = QLabel("定时模式:")
+        self.timer_mode_label.setMinimumWidth(80)  # 设置最小宽度
         self.timer_mode_combo = QComboBox()
         self.timer_mode_combo.addItems(["护眼模式", "夜间模式", "防蓝光模式"])
         self.timer_mode_combo.setCurrentIndex(self.timer_mode)
@@ -312,8 +319,10 @@ class MainWindow(QMainWindow):
         # 热键设置组
         self.hotkey_group = QGroupBox("热键设置")
         self.hotkey_layout = QGridLayout()
-        
+        self.hotkey_layout.setColumnStretch(1, 1)  # 让第二列自动扩展
+
         self.exit_hotkey_label = QLabel("退出程序热键:")
+        self.exit_hotkey_label.setMinimumWidth(100)  # 设置最小宽度
         self.exit_hotkey_combo = QComboBox()
         self.exit_hotkey_combo.addItems(["Ctrl+E", "Ctrl+Q", "Alt+F4", "自定义"])
         
