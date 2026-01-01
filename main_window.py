@@ -322,6 +322,7 @@ class MainWindow(QMainWindow):
         self.hotkey_group = QGroupBox("热键设置")
         self.hotkey_layout = QGridLayout()
         self.hotkey_layout.setColumnStretch(1, 1)  # 让第二列自动扩展
+        self.hotkey_layout.setContentsMargins(10, 0, 10, 10)  # 设置边距：左、上、右、下
 
         self.exit_hotkey_label = QLabel("退出程序热键:")
         self.exit_hotkey_label.setMinimumWidth(100)  # 设置最小宽度
