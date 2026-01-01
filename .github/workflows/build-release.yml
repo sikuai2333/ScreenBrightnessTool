@@ -4,88 +4,89 @@ on:
   push:
     tags:
       - 'v*' # 当推送标签v开头的tag时触发（如v1.0.0）
+  workflow_dispatch: # 允许手动触发
 
 jobs:
   build-windows:
     runs-on: windows-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-          
+
       - name: Build with PyInstaller
         run: |
-          pyinstaller --clean --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool-Windows main.py
+          pyinstaller --clean --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool-Windows --add-data "icon.png;." main.py
           
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ScreenBrightnessTool-Windows
           path: dist/ScreenBrightnessTool-Windows.exe
-          
+
   build-macos:
     runs-on: macos-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-          
+
       - name: Build with PyInstaller
         run: |
-          pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-macOS main.py
-          
+          pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-macOS --add-data "icon.png:." main.py
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ScreenBrightnessTool-macOS
           path: dist/ScreenBrightnessTool-macOS
-          
+
   build-linux:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-        
+        uses: actions/checkout@v4
+
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
           cache: 'pip'
-          
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install pyinstaller
-          
+
       - name: Build with PyInstaller
         run: |
-          pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-Linux main.py
-          
+          pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-Linux --add-data "icon.png:." main.py
+
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ScreenBrightnessTool-Linux
           path: dist/ScreenBrightnessTool-Linux
@@ -97,11 +98,11 @@ jobs:
       contents: write
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
-        
+        uses: actions/download-artifact@v4
+
       - name: Create Release
         id: create_release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             ScreenBrightnessTool-Windows/ScreenBrightnessTool-Windows.exe
@@ -109,4 +110,30 @@ jobs:
             ScreenBrightnessTool-Linux/ScreenBrightnessTool-Linux
           draft: false
           prerelease: false
-          generate_release_notes: true 
+          generate_release_notes: true
+          body: |
+            ## 屏幕亮度调节工具 / Screen Brightness Tool
+
+            ### 功能特性 / Features
+            - 🔆 屏幕亮度调节 / Screen brightness adjustment
+            - 👁️ 护眼模式 / Eye protection mode
+            - 🌙 夜间模式 / Night mode
+            - 🔵 防蓝光模式 / Blue light filter
+            - ⏰ 定时切换 / Scheduled switching
+            - 🎨 悬浮窗显示 / Floating window
+            - 🎯 区域亮度调节 / Area brightness adjustment
+            - 🌓 暗黑模式 / Dark mode
+
+            ### 下载说明 / Download Instructions
+            - **Windows**: 下载 `ScreenBrightnessTool-Windows.exe`
+            - **macOS**: 下载 `ScreenBrightnessTool-macOS`
+            - **Linux**: 下载 `ScreenBrightnessTool-Linux`
+
+            ### 使用方法 / Usage
+            1. 下载对应平台的可执行文件
+            2. 双击运行即可使用
+            3. Windows用户可能需要允许防火墙权限
+
+            ---
+
+            **完整更新日志请查看下方自动生成的发布说明** 
