@@ -72,14 +72,25 @@ class BrightnessApp:
     
     def set_app_icon(self):
         """设置应用程序图标"""
+        # 获取资源文件路径（支持PyInstaller打包）
+        def resource_path(relative_path):
+            """获取资源文件的绝对路径，兼容开发环境和PyInstaller打包后的环境"""
+            try:
+                # PyInstaller创建临时文件夹，并将路径存储在_MEIPASS中
+                base_path = sys._MEIPASS
+            except Exception:
+                base_path = os.path.abspath(".")
+            return os.path.join(base_path, relative_path)
+
         # 尝试从不同路径加载图标
         icon_paths = [
+            resource_path("icon.png"),      # PyInstaller打包后的路径
             "icon.png",                     # 根目录
             os.path.join("images", "icon.png"),  # images文件夹
             os.path.join("resources", "icon.png"),  # resources文件夹
             os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")  # 脚本所在目录
         ]
-        
+
         for path in icon_paths:
             if os.path.exists(path):
                 self.app.setWindowIcon(QIcon(path))
