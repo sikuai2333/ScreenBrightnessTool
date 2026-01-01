@@ -27,7 +27,7 @@ jobs:
 
       - name: Build with PyInstaller
         run: |
-          pyinstaller --clean --noconsole --onefile --icon=icon.png --name=ScreenBrightnessTool-Windows --add-data "icon.png;." main.py
+          pyinstaller --clean --noconsole --onefile --icon=icon.ico --name=ScreenBrightnessTool-Windows --add-data "icon.png;." main.py
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
