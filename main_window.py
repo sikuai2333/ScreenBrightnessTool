@@ -717,7 +717,7 @@ class MainWindow(QMainWindow):
             QGroupBox::title {
                 subcontrol-origin: margin;
                 subcontrol-position: top left;
-                padding: 0 5px;
+                padding: 0 8px;
                 color: #ddd;
             }
             QPushButton {
@@ -771,7 +771,11 @@ class MainWindow(QMainWindow):
         """设置亮色主题"""
         app = QApplication.instance()
         app.setPalette(app.style().standardPalette())
-        app.setStyleSheet("")
+        app.setStyleSheet("""
+            QGroupBox::title {
+                padding: 0 8px;
+            }
+        """)
         
     def toggle_dark_mode(self, enabled):
         """切换暗黑模式"""
