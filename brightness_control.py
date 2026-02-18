@@ -3,6 +3,7 @@ import platform
 from PyQt5.QtWidgets import QWidget, QApplication, QRubberBand
 from PyQt5.QtCore import Qt, QTimer, QRect, QPoint, QSize
 from PyQt5.QtGui import QPainter, QColor, QScreen, QCursor
+from core_logic import brightness_to_alpha
 
 class BrightnessControl:
     def __init__(self):
@@ -52,9 +53,7 @@ class BrightnessControl:
         if not self._overlay:
             return
             
-        # 亮度值反转为透明度：亮度100%对应透明度100%（即alpha=0）
-        # 亮度0%对应透明度0%（即alpha=255）
-        alpha = int(255 * (100 - brightness_value) / 100)
+        alpha = brightness_to_alpha(brightness_value)
         
         for overlay in self._overlay:
             # 如果在区域模式下，只有选中的区域才应用亮度设置

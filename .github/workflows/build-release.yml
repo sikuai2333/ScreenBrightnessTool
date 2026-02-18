@@ -1,69 +1,18 @@
-name: Build and Release
+name: CI Build and Release
 
 on:
   push:
+    branches:
+      - main
     tags:
-      - 'v*' # 当推送标签v开头的tag时触发（如v1.0.0）
-  workflow_dispatch: # 允许手动触发
+      - "v*"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller pillow
-
-      - name: Build with PyInstaller
-        run: |
-          pyinstaller --clean --noconsole --onefile --icon=icon.ico --name=ScreenBrightnessTool-Windows --add-data "icon.png;." main.py
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenBrightnessTool-Windows
-          path: dist/ScreenBrightnessTool-Windows.exe
-
-  build-macos:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller pillow
-
-      - name: Build with PyInstaller
-        run: |
-          pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-macOS --add-data "icon.png:." main.py
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ScreenBrightnessTool-macOS
-          path: dist/ScreenBrightnessTool-macOS
-
-  build-linux:
+  test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -72,8 +21,48 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-          cache: 'pip'
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
+
+  build:
+    if: github.event_name != 'pull_request'
+    needs: test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact_name: ScreenBrightnessTool-Windows
+            artifact_path: dist/ScreenBrightnessTool-Windows.exe
+            build_cmd: pyinstaller --clean --noconsole --onefile --icon=icon.ico --name=ScreenBrightnessTool-Windows --add-data "icon.png;." main.py
+          - os: macos-latest
+            artifact_name: ScreenBrightnessTool-macOS
+            artifact_path: dist/ScreenBrightnessTool-macOS
+            build_cmd: pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-macOS --add-data "icon.png:." main.py
+          - os: ubuntu-latest
+            artifact_name: ScreenBrightnessTool-Linux
+            artifact_path: dist/ScreenBrightnessTool-Linux
+            build_cmd: pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-Linux --add-data "icon.png:." main.py
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -82,17 +71,17 @@ jobs:
           pip install pyinstaller pillow
 
       - name: Build with PyInstaller
-        run: |
-          pyinstaller --clean --noconsole --onefile --name=ScreenBrightnessTool-Linux --add-data "icon.png:." main.py
+        run: ${{ matrix.build_cmd }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ScreenBrightnessTool-Linux
-          path: dist/ScreenBrightnessTool-Linux
-          
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
+
   create-release:
-    needs: [build-windows, build-macos, build-linux]
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -101,7 +90,6 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Create Release
-        id: create_release
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -111,29 +99,3 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
-          body: |
-            ## 屏幕亮度调节工具 / Screen Brightness Tool
-
-            ### 功能特性 / Features
-            - 🔆 屏幕亮度调节 / Screen brightness adjustment
-            - 👁️ 护眼模式 / Eye protection mode
-            - 🌙 夜间模式 / Night mode
-            - 🔵 防蓝光模式 / Blue light filter
-            - ⏰ 定时切换 / Scheduled switching
-            - 🎨 悬浮窗显示 / Floating window
-            - 🎯 区域亮度调节 / Area brightness adjustment
-            - 🌓 暗黑模式 / Dark mode
-
-            ### 下载说明 / Download Instructions
-            - **Windows**: 下载 `ScreenBrightnessTool-Windows.exe`
-            - **macOS**: 下载 `ScreenBrightnessTool-macOS`
-            - **Linux**: 下载 `ScreenBrightnessTool-Linux`
-
-            ### 使用方法 / Usage
-            1. 下载对应平台的可执行文件
-            2. 双击运行即可使用
-            3. Windows用户可能需要允许防火墙权限
-
-            ---
-
-            **完整更新日志请查看下方自动生成的发布说明** 

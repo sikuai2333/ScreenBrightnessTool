@@ -5,9 +5,11 @@ from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                             QApplication, QSystemTrayIcon, QMenu, QAction,
                             QTimeEdit, QGridLayout, QSpinBox, QComboBox, QShortcut,
                             QColorDialog, QFrame)
-from PyQt5.QtCore import Qt, QSettings, QTime, QTimer, QUrl
+from PyQt5.QtCore import Qt, QTime, QTimer, QUrl, pyqtSignal
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QColor, QPalette
 import webbrowser  # 使用Python标准库的webbrowser模块打开URL
+from app_settings import create_settings
+from core_logic import is_time_in_range
 
 class ColorPickerButton(QPushButton):
     """颜色选择按钮"""
@@ -48,11 +50,13 @@ class ColorPickerButton(QPushButton):
         return self.color
 
 class MainWindow(QMainWindow):
+    settings_applied = pyqtSignal()
+
     def __init__(self):
         super(MainWindow, self).__init__()
         
         # 初始化设置
-        self.settings = QSettings("BrightnessControl", "BrightnessAdjuster")
+        self.settings = create_settings()
         self.brightness_value = self.settings.value("brightness", 100, type=int)
         self.auto_start = self.settings.value("auto_start", False, type=bool)
         self.blue_light_filter = self.settings.value("blue_light_filter", False, type=bool)
@@ -472,7 +476,6 @@ class MainWindow(QMainWindow):
         """更新护眼模式强度"""
         self.eye_protect_intensity = value
         self.eye_protect_intensity_value_label.setText(f"{value}%")
-        self.settings.setValue("eye_protect_intensity", value)
     
     def set_brightness_mode(self, value):
         self.brightness_slider.setValue(value)
@@ -540,18 +543,12 @@ class MainWindow(QMainWindow):
         if not self.timer_enabled:
             return
         
-        current_time = QTime.currentTime()
-        scheduled_start_time = self.timer_start_time_edit.time()
-        scheduled_end_time = self.timer_end_time_edit.time()
-        
-        # 跨天情况处理
-        is_in_time_range = False
-        if scheduled_start_time < scheduled_end_time:
-            # 正常情况：开始时间早于结束时间
-            is_in_time_range = scheduled_start_time <= current_time < scheduled_end_time
-        else:
-            # 跨天情况：开始时间晚于结束时间（例如晚上10点到早上6点）
-            is_in_time_range = current_time >= scheduled_start_time or current_time < scheduled_end_time
+        current_time = QTime.currentTime().toPyTime()
+        scheduled_start_time = self.timer_start_time_edit.time().toPyTime()
+        scheduled_end_time = self.timer_end_time_edit.time().toPyTime()
+
+        # 统一使用纯逻辑函数处理正常与跨天区间
+        is_in_time_range = is_time_in_range(current_time, scheduled_start_time, scheduled_end_time)
         
         # 根据是否在时间范围内执行相应操作
         mode_index = self.timer_mode_combo.currentIndex()
@@ -629,6 +626,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("float_text_color", self.float_text_color)
         
         self.settings.sync()
+        self.settings_applied.emit()
     
     def setup_tray_icon(self):
         # 创建系统托盘图标
@@ -805,9 +803,6 @@ class MainWindow(QMainWindow):
         """切换暗黑模式"""
         self.dark_mode = enabled
         self.apply_theme()
-        
-        # 保存设置
-        self.settings.setValue("dark_mode", enabled)
 
     def toggle_area_mode(self, enabled):
         """切换区域模式"""
@@ -839,7 +834,3 @@ class MainWindow(QMainWindow):
     def set_brightness_control(self, brightness_control):
         """设置亮度控制器的引用"""
         self.brightness_control = brightness_control
-
-
-# 添加QShortcut类
-from PyQt5.QtWidgets import QShortcut 

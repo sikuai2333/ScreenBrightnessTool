@@ -67,6 +67,12 @@ pip install -r requirements.txt
 python main.py
 ```
 
+### 运行测试
+
+```bash
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
 ### 打包可执行文件
 
 #### Windows
@@ -284,6 +290,12 @@ pip install -r requirements.txt
 
 ```bash
 python main.py
+```
+
+### Running Tests
+
+```bash
+python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 ### Building Executables

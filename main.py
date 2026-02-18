@@ -2,17 +2,18 @@ import sys
 import os
 import platform
 from PyQt5.QtWidgets import QApplication, QMessageBox
-from PyQt5.QtCore import QSettings, QTime, QLockFile, QDir
+from PyQt5.QtCore import QLockFile, QDir
 from PyQt5.QtGui import QIcon, QColor
 from main_window import MainWindow
 from brightness_control import BrightnessControl
 from floating_button import FloatingButton
+from app_settings import create_settings, ORGANIZATION_NAME
 
 class BrightnessApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
         self.app.setApplicationName("屏幕亮度调节工具")
-        self.app.setOrganizationName("BrightnessControl")
+        self.app.setOrganizationName(ORGANIZATION_NAME)
 
         # 创建锁文件以防止多实例运行
         lock_file_path = QDir.temp().absoluteFilePath("ScreenBrightnessTool.lock")
@@ -43,7 +44,7 @@ class BrightnessApp:
         self.main_window.set_brightness_control(self.brightness_control)
         
         # 获取悬浮球颜色设置
-        settings = QSettings("BrightnessControl", "BrightnessAdjuster")
+        settings = create_settings()
         bg_color = settings.value("float_bg_color", QColor(30, 30, 30, 180))
         if isinstance(bg_color, str):
             bg_color = QColor(bg_color)
@@ -123,8 +124,8 @@ class BrightnessApp:
             self.toggle_floating_button
         )
         
-        # 应用设置时保存当前状态
-        self.main_window.apply_btn.clicked.connect(self.save_settings)
+        # 在统一设置保存完成后，再处理系统级自启动配置
+        self.main_window.settings_applied.connect(self.check_autostart)
     
     def update_floating_button_brightness(self, value):
         """更新悬浮按钮显示的亮度值"""
@@ -142,7 +143,7 @@ class BrightnessApp:
     
     def apply_saved_settings(self):
         """应用上次保存的设置"""
-        settings = QSettings("BrightnessControl", "BrightnessAdjuster")
+        settings = create_settings()
         
         # 获取保存的亮度值，默认为100
         brightness = settings.value("brightness", 100, type=int)
@@ -187,34 +188,9 @@ class BrightnessApp:
             self.main_window.area_mode_checkbox.setChecked(area_mode)
             self.brightness_control.is_area_selected = area_mode
     
-    def save_settings(self):
-        """保存当前设置"""
-        settings = QSettings("BrightnessControl", "BrightnessAdjuster")
-        
-        # 保存当前亮度值
-        settings.setValue("brightness", self.main_window.brightness_value)
-        
-        # 保存高对比度状态
-        settings.setValue("high_contrast", self.main_window.high_contrast_checkbox.isChecked())
-        
-        # 保存防蓝光状态
-        settings.setValue("blue_light_filter", self.main_window.blue_light_checkbox.isChecked())
-        
-        # 保存自启动状态
-        settings.setValue("auto_start", self.main_window.autostart_checkbox.isChecked())
-        
-        # 保存悬浮按钮状态
-        settings.setValue("show_floating_button", self.main_window.floating_btn_checkbox.isChecked())
-        
-        # 确保设置被写入
-        settings.sync()
-        
-        # 检查是否需要更新自启动
-        self.check_autostart()
-    
     def check_autostart(self):
         """检查是否需要设置自启动"""
-        settings = QSettings("BrightnessControl", "BrightnessAdjuster")
+        settings = create_settings()
         auto_start = settings.value("auto_start", False, type=bool)
         
         if auto_start:
